@@ -1,0 +1,16 @@
+node_modules
+data
+dist
+.env
+
+# IDE/editor (vs code/jet brains)
+.vscode/
+.idea/
+
+# sys files (mac, windows, IDE)
+.DS_Store
+Thumbs.db
+
+# logs
+logs
+*.log

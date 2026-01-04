@@ -1,0 +1,38 @@
+{
+  "name": "justchacha",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "rimraf dist && tsc && tsc-alias",
+    "start": "node -r module-alias/register dist/index.js",
+    "dev": "npx ts-node -r tsconfig-paths/register ./src/index.ts",
+    "test": "ts-mocha --paths -p tsconfig.json src/tests/**/*.test.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "devDependencies": {
+    "@types/chai": "^5.2.3",
+    "@types/json-bigint": "^1.0.4",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^22.10.10",
+    "chai": "^6.2.1",
+    "mocha": "^11.7.5",
+    "rimraf": "^6.0.1",
+    "ts-mocha": "^11.1.0",
+    "ts-node": "^10.9.2",
+    "tsc-alias": "^1.8.10",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "module-alias": "^2.2.3"
+  }
+}
