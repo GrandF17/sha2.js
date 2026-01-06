@@ -17,11 +17,10 @@ export class SHA256 {
 
     public update(x: Uint8Array) {
         const ba = Math.ceil(x.length / this.BSU8);     // blocks amount
-        const len = this.BSU8 * ba;                     // padded message length
-
         const buff = new Uint8Array(this.BSU8 * ba);    // buffer
-        buff.fill(0x80, 0, 1);
-        buff.set(x, len - x.length);
+        buff.set(x, 0);
+        buff[x.length] = 0x80;
+        buff[buff.length - 1] = 0x18;
 
         /** simple DataView to easily get operate bytes */
         const view = new DataView(
@@ -48,11 +47,14 @@ export class SHA256 {
 
             /** 2) compress (64 rounds) */
             let [A, B, C, D, E, F, G, H] = this.state;  // copy of local state
+
             for (let i = 0; i < 64; ++i) {
                 const S1 = this.#S1(E);
                 const S0 = this.#S0(A);
-                const T1 = (H + S1 + this.#ch(E, F, G) + SHA256_K[i] + this.buff[i]) | 0;
-                const T2 = (S0 + this.#maj(A, B, C)) | 0;
+                const CH = this.#ch(E, F, G);
+                const MAJ = this.#maj(A, B, C);
+                const T1 = (H + S1 + CH + SHA256_K[i] + this.buff[i]) | 0;
+                const T2 = (S0 + MAJ) | 0;
                 H = G;
                 G = F;
                 F = E;
@@ -64,14 +66,15 @@ export class SHA256 {
             };
 
             /** 3) add the compressed chunk to the current hash value */
-            A = A + this.state[0];
-            B = B + this.state[1];
-            C = C + this.state[2];
-            D = D + this.state[3];
-            E = E + this.state[4];
-            F = F + this.state[5];
-            G = G + this.state[6];
-            H = H + this.state[7];
+            A = A + this.state[0] | 0;
+            B = B + this.state[1] | 0;
+            C = C + this.state[2] | 0;
+            D = D + this.state[3] | 0;
+            E = E + this.state[4] | 0;
+            F = F + this.state[5] | 0;
+            G = G + this.state[6] | 0;
+            H = H + this.state[7] | 0;
+            console.log([A, B, C, D, E, F, G, H].toString());
 
             this.state.set([A, B, C, D, E, F, G, H]);
         };
@@ -81,7 +84,6 @@ export class SHA256 {
 
     public digest() {
         const result = new Uint32Array(this.state);
-        console.log(Buffer.from(result.buffer).toString("hex"));
 
         this.state.set(SHA256_IV);
         this.buff.fill(0x00);
@@ -91,28 +93,29 @@ export class SHA256 {
             result.byteOffset,
             result.length * 4
         );
-        // bb1d087da9cbec26091ab1369fba0519bed5bf050e0143e539da09e859ea01ec
     };
 
     /** Sigma0 for SHA-224/256 */
-    #S0 = (x: number) => this.#rotr(x, 2) ^ this.#rotr(x, 13) ^ this.#rotr(x, 22);
+    #S0 = (x: number) => this.#rrot(x, 2) ^ this.#rrot(x, 13) ^ this.#rrot(x, 22);
 
     /** Sigma1 for SHA-224/256 */
-    #S1 = (x: number) => this.#rotr(x, 6) ^ this.#rotr(x, 11) ^ this.#rotr(x, 25);
+    #S1 = (x: number) => this.#rrot(x, 6) ^ this.#rrot(x, 11) ^ this.#rrot(x, 25);
 
     /** sigma0 for SHA-224/256 */
-    #s0 = (x: number) => this.#rotr(x, 7) ^ this.#rotr(x, 18) ^ this.#shr(x, 3);
+    #s0 = (x: number) => this.#rrot(x, 7) ^ this.#rrot(x, 18) ^ this.#rsh(x, 3);
 
     /** sigma1 for SHA-224/256 */
-    #s1 = (x: number) => this.#rotr(x, 17) ^ this.#rotr(x, 19) ^ this.#shr(x, 10);
+    #s1 = (x: number) => this.#rrot(x, 17) ^ this.#rrot(x, 19) ^ this.#rsh(x, 10);
 
     /** MAJ (Majority) */
-    #maj = (x: number, y: number, z: number) => (x | y) ^ (x | z) ^ (y | z);
+    #maj = (x: number, y: number, z: number) => (x & y) ^ (x & z) ^ (y & z);
 
     /** CH (Choose) */
-    #ch = (x: number, y: number, z: number) => (x | y) ^ (~x | z);
+    #ch = (x: number, y: number, z: number) => (x & y) ^ (~x & z);
 
-    #shr = (x: number, n: number) => x >>> n;
+    /** right shift (non-cyclic) */
+    #rsh = (x: number, n: number) => x >>> n;
 
-    #rotr = (x: number, n: number) => (x << (32 - n) | x >>> n);
+    /** right rotate (cyclic right shift) */
+    #rrot = (x: number, n: number) => (x << (32 - n) | x >>> n);
 };
