@@ -15,84 +15,96 @@ export class SHA256 {
 
     constructor() { };
 
-    public update(x: Uint8Array) {
-        const ba = Math.ceil(x.length / this.BSU8);     // blocks amount
-        const buff = new Uint8Array(this.BSU8 * ba);    // buffer
-        buff.set(x, 0);
-        buff[x.length] = 0x80;
-        buff[buff.length - 1] = 0x18;
+    #core = (view: DataView, offset: number) => {
+        /**
+         * 1) extend the first 16 words into the remaining 
+         * 48 words w[16..63] of the message schedule array
+         */
+        for (let i = 0; i < 16; ++i, offset += 4) {
+            /** get Uint32 in BE format */
+            this.buff[i] = view.getUint32(
+                offset,
+                false
+            );
+        };
 
-        /** simple DataView to easily get operate bytes */
-        const view = new DataView(
-            buff.buffer,
-            buff.byteOffset,
-            buff.byteLength,
-        );
+        for (let i = 16; i < 64; ++i) {
+            const s0 = this.#s0(this.buff[i - 15]);
+            const s1 = this.#s1(this.buff[i - 2]);
+            this.buff[i] = (s1 + this.buff[i - 7] + s0 + this.buff[i - 16]) | 0;
+        };
+
+        /** 2) compress (64 rounds) */
+        let [A, B, C, D, E, F, G, H] = this.state;  // copy of local state
+
+        for (let i = 0; i < 64; ++i) {
+            const S1 = this.#S1(E);
+            const S0 = this.#S0(A);
+
+            const CH = this.#ch(E, F, G);
+            const MAJ = this.#maj(A, B, C);
+
+            const T1 = (H + S1 + CH + SHA256_K[i] + this.buff[i]) | 0;
+            const T2 = (S0 + MAJ) | 0;
+
+            H = G;
+            G = F;
+            F = E;
+            E = (D + T1) | 0;
+            D = C;
+            C = B;
+            B = A;
+            A = (T1 + T2) | 0;
+        };
+
+        /** 3) add the compressed chunk to the current hash value */
+        A = A + this.state[0] | 0;
+        B = B + this.state[1] | 0;
+        C = C + this.state[2] | 0;
+        D = D + this.state[3] | 0;
+        E = E + this.state[4] | 0;
+        F = F + this.state[5] | 0;
+        G = G + this.state[6] | 0;
+        H = H + this.state[7] | 0;
+        console.log([A, B, C, D, E, F, G, H].toString());
+
+        this.state.set([A, B, C, D, E, F, G, H]);
+    };
+
+    public update(x: Uint8Array) {
+        const bitLen = x.length * 8;
+
+        // +1 байт (0x80) +8 байт (length)
+        const totalLen = x.length + 1 + 8;
+        const paddedLen = Math.ceil(totalLen / 64) * 64;
+
+        const buff = new Uint8Array(paddedLen);
+        buff.set(x);
+        buff[x.length] = 0x80;
+
+        const view = new DataView(buff.buffer);
+        view.setUint32(paddedLen - 4, bitLen >>> 0, false);
+        view.setUint32(paddedLen - 8, Math.floor(bitLen / 2 ** 32), false);
 
         for (let offset = 0; offset < buff.length;) {
-            /**
-             * 1) extend the first 16 words into the remaining 
-             * 48 words w[16..63] of the message schedule array
-             */
-            for (let i = 0; i < 16; ++i, offset += 4) {
-                /** get Uint32 in BE format */
-                this.buff[i] = view.getUint32(offset);
-            };
 
-            for (let i = 16; i < 64; ++i) {
-                const s0 = this.#s0(this.buff[i - 15]);
-                const s1 = this.#s1(this.buff[i - 2]);
-                this.buff[i] = (s1 + this.buff[i - 7] + s0 + this.buff[i - 16]);
-            };
-
-            /** 2) compress (64 rounds) */
-            let [A, B, C, D, E, F, G, H] = this.state;  // copy of local state
-
-            for (let i = 0; i < 64; ++i) {
-                const S1 = this.#S1(E);
-                const S0 = this.#S0(A);
-                const CH = this.#ch(E, F, G);
-                const MAJ = this.#maj(A, B, C);
-                const T1 = (H + S1 + CH + SHA256_K[i] + this.buff[i]) | 0;
-                const T2 = (S0 + MAJ) | 0;
-                H = G;
-                G = F;
-                F = E;
-                E = (D + T1) | 0;
-                D = C;
-                C = B;
-                B = A;
-                A = (T1 + T2) | 0;
-            };
-
-            /** 3) add the compressed chunk to the current hash value */
-            A = A + this.state[0] | 0;
-            B = B + this.state[1] | 0;
-            C = C + this.state[2] | 0;
-            D = D + this.state[3] | 0;
-            E = E + this.state[4] | 0;
-            F = F + this.state[5] | 0;
-            G = G + this.state[6] | 0;
-            H = H + this.state[7] | 0;
-            console.log([A, B, C, D, E, F, G, H].toString());
-
-            this.state.set([A, B, C, D, E, F, G, H]);
         };
 
         return this;
     };
 
-    public digest() {
-        const result = new Uint32Array(this.state);
+    public digest(): Uint8Array {
+        const out = new Uint8Array(32);
+        const view = new DataView(out.buffer);
+
+        for (let i = 0; i < 8; ++i) {
+            view.setUint32(i * 4, this.state[i], false);
+        };
 
         this.state.set(SHA256_IV);
-        this.buff.fill(0x00);
+        this.buff.fill(0);
 
-        return new Uint8Array(
-            result.buffer,
-            result.byteOffset,
-            result.length * 4
-        );
+        return out;
     };
 
     /** Sigma0 for SHA-224/256 */

@@ -8,10 +8,9 @@
 import { sha256 } from '@noble/hashes/sha2.js';
 import { SHA256 } from "@/classes";
 
-const sha = new SHA256();
-const a = sha.update(new Uint8Array([0x10, 0x20, 0x30])).digest();
+const a = new SHA256().update(new Uint8Array([0x10, 0x20, 0x30])).digest();
 console.log(Buffer.from(a).toString("hex"));
 console.log("\n\n\n======================================================\n\n\n");
 
-const b = sha256(Uint8Array.from([0x10, 0x20, 0x30]));
+const b = sha256.create().update(new Uint8Array([0x10, 0x20])).update(new Uint8Array([0x30])).digest();
 console.log(Buffer.from(b).toString("hex"));
