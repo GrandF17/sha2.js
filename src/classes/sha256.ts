@@ -1,12 +1,11 @@
 import { SHA256_IV, SHA256_K } from "@/computed/constants";
 
+
+/**
+ * @abstract NIST SHA-256 hash crypto-primitive
+ * @link https://www.rfc-editor.org/rfc/rfc6234
+ */
 export class SHA256 {
-    /** @abstract SHA256 K */
-    public readonly K = new Uint32Array(SHA256_K);
-
-    /** @abstract SHA256 IV */
-    public readonly IV = new Uint32Array(SHA256_IV);
-
     /**
      * @abstract bytes in word (Uint8 in Uint32)
      * @default 4 bytes
@@ -42,19 +41,40 @@ export class SHA256 {
      */
     public readonly RBSU32 = this.RBSU8 / this.BIW;
 
+    /** 
+     * @abstract SHA256 K 
+     * @overrideable
+     */
+    protected get K() {
+        return new Uint32Array(SHA256_K);
+    };
+
+    /** 
+     * @abstract SHA256 IV 
+     * @overrideable
+    */
+    protected get IV() {
+        return new Uint32Array(SHA256_IV);
+    };
+
     /** @abstract current state of SHA function */
-    #state = new Uint32Array(this.IV);
+    #state: Uint32Array;
 
     /** @abstract reusable buffer */
-    #buff = new Uint8Array(this.BSU8);
+    #buff: Uint8Array;
 
     /** @abstract buffer pointer */
-    #p = 0;
+    #p: number;
 
     /** @abstract total bytes hashed */
-    #t = 0;
+    #t: number;
 
-    constructor() { };
+    constructor() {
+        this.#state = new Uint32Array(this.IV);
+        this.#buff = new Uint8Array(this.BSU8);
+        this.#p = 0;
+        this.#t = 0;
+    };
 
     ////////////////////////////////////////////////////////////////
     //////////////////////////// PUBLIC ///////////////////////////
@@ -138,7 +158,7 @@ export class SHA256 {
         for (let i = 16; i < 64; ++i) {
             const s0 = this.#s0(buffer[i - 15]);
             const s1 = this.#s1(buffer[i - 2]);
-            buffer[i] = (s1 + buffer[i - 7] + s0 + buffer[i - 16]) | 0;
+            buffer[i] = (s1 + buffer[i - 7] + s0 + buffer[i - 16]);
         };
 
         /** 2) compress (64 rounds) */
@@ -151,33 +171,33 @@ export class SHA256 {
             const CH = this.#ch(E, F, G);
             const MAJ = this.#maj(A, B, C);
 
-            const T1 = (H + S1 + CH + this.K[i] + buffer[i]) | 0;
-            const T2 = (S0 + MAJ) | 0;
+            const T1 = (H + S1 + CH + this.K[i] + buffer[i]);
+            const T2 = (S0 + MAJ);
 
             H = G;
             G = F;
             F = E;
-            E = (D + T1) | 0;
+            E = (D + T1);
             D = C;
             C = B;
             B = A;
-            A = (T1 + T2) | 0;
+            A = (T1 + T2);
         };
 
         /** 
-         * 3) add the compressed 
-         * chunk to the current hash value 
+         * 3) add the compressed chunk
+         * to the current hash value 
          */
-        A = A + this.#state[0] | 0;
-        B = B + this.#state[1] | 0;
-        C = C + this.#state[2] | 0;
-        D = D + this.#state[3] | 0;
-        E = E + this.#state[4] | 0;
-        F = F + this.#state[5] | 0;
-        G = G + this.#state[6] | 0;
-        H = H + this.#state[7] | 0;
-
-        this.#state.set([A, B, C, D, E, F, G, H]);
+        this.#state.set([
+            this.#state[0] + A,
+            this.#state[1] + B,
+            this.#state[2] + C,
+            this.#state[3] + D,
+            this.#state[4] + E,
+            this.#state[5] + F,
+            this.#state[6] + G,
+            this.#state[7] + H,
+        ]);
     };
 
     protected x2buff(x: Uint8Array, offset: number): number {

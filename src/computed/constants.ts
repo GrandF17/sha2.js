@@ -17,16 +17,16 @@ export const SHA256_K = new Uint32Array([
     0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
 ]);
 
-/** Initial SHA256 state. Bits 0..32 of frac part of sqrt of primes 2..19 */
-export const SHA256_IV = new Uint32Array([
-    0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
-    0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
-]);
-
 /** Initial SHA224 state. Bits 32..64 of frac part of sqrt of primes 23..53 */
 export const SHA224_IV = new Uint32Array([
     0xc1059ed8, 0x367cd507, 0x3070dd17, 0xf70e5939,
     0xffc00b31, 0x68581511, 0x64f98fa7, 0xbefa4fa4,
+]);
+
+/** Initial SHA256 state. Bits 0..32 of frac part of sqrt of primes 2..19 */
+export const SHA256_IV = new Uint32Array([
+    0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
+    0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
 ]);
 
 /** Initial SHA384 state. Bits 0..64 of frac part of sqrt of primes 23..53 */
