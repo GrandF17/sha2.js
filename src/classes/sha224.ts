@@ -11,18 +11,21 @@ export class SHA224 extends SHA256 {
     /**
      * @abstract return block size (Uint8)
      * @default 28 bytes (224 bits)
-     * @overrideable
+     * @overrided
      */
     public override readonly RBSU8 = 28;
 
     /**
      * @abstract return block size (Uint32)
      * @default 7 words
-     * @overrideable
+     * @overrided
      */
     public override readonly RBSU32 = this.RBSU8 / this.BIW;
 
-    /** @abstract SHA224 IV */
+    /** 
+     * @abstract SHA224 IV 
+     * @overrided
+     */
     protected override get IV() {
         return new Uint32Array(SHA224_IV);
     };
