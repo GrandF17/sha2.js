@@ -64,7 +64,7 @@ export class SHA256 {
         for (let i = 0; i < x.length; i = this.x2buff(x, i)) {
             if (x.length - i === this.BSU8) {
                 this.core();
-                this.#buff.fill(0);
+                this.#buff.fill(0x00);
             };
         };
 
@@ -75,7 +75,7 @@ export class SHA256 {
     /** @overrideable */
     public digest() {
         if (this.#p === this.#buff.length) {
-            this.#buff.fill(0);
+            this.#buff.fill(0x00);
             this.#p = 0;
         };
 
@@ -83,7 +83,7 @@ export class SHA256 {
         this.#buff[this.#p++] = 0x80;
 
         if ((this.BSU8 - this.#p) < 4) {
-            this.#buff.fill(0);
+            this.#buff.fill(0x00);
         };
 
         /** setting length to the end of buffer */
@@ -97,7 +97,7 @@ export class SHA256 {
         const out = new Uint8Array(this.RBSU8);
         const view = new DataView(out.buffer);
 
-        for (let i = 0; i < 8; ++i) {
+        for (let i = 0; i < this.RBSU32; ++i) {
             view.setUint32(
                 i * this.BIW,
                 this.#state[i],
@@ -105,8 +105,11 @@ export class SHA256 {
             );
         };
 
+        /** cleaning */
         this.#state.set(this.IV);
-        this.#buff.fill(0);
+        this.#buff.fill(0x00);
+        this.#p = 0;
+        this.#t = 0;
 
         return out;
     };
@@ -184,7 +187,6 @@ export class SHA256 {
 
         return offset;
     };
-
 
     ////////////////////////////////////////////////////////////////
     //////////////////////////// HIDDEN ///////////////////////////
