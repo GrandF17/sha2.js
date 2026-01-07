@@ -1,8 +1,21 @@
 import { SHA256_IV, SHA256_K } from "@/computed/constants";
 
 export class SHA256 {
+    /** @abstract SHA256 K */
+    public readonly K = new Uint32Array(SHA256_K);
+
+    /** @abstract SHA256 IV */
+    public readonly IV = new Uint32Array(SHA256_IV);
+
+    /**
+     * @abstract bytes in word (Uint8 in Uint32)
+     * @default 4 bytes
+     * @overrideable
+     */
+    public readonly BIW = 4;
+
     /** 
-     * block size (Uint8)
+     * @abstract block size (Uint8)
      * @default 64 bytes (512 bits)
      * @overrideable
      */
@@ -13,27 +26,33 @@ export class SHA256 {
      * @default 16 words
      * @overrideable
      */
-    public readonly BSU32 = this.BSU8 / 4;
+    public readonly BSU32 = this.BSU8 / this.BIW;
 
     /**
-     * return block size (Uint8)
+     * @abstract return block size (Uint8)
      * @default 32 bytes (256 bits)
      * @overrideable
      */
     public readonly RBSU8 = this.BSU8 / 2;
 
     /**
-     * return block size (Uint32)
+     * @abstract return block size (Uint32)
      * @default 8 words
      * @overrideable
      */
-    public readonly RBSU32 = this.RBSU8 / 4;
+    public readonly RBSU32 = this.RBSU8 / this.BIW;
 
-    /** current state of SHA function */
-    #state = new Uint32Array(SHA256_IV);
+    /** @abstract current state of SHA function */
+    #state = new Uint32Array(this.IV);
 
-    /** reusable buffer */
-    #buff = new Uint32Array(this.BSU8);
+    /** @abstract reusable buffer */
+    #buff = new Uint8Array(this.BSU8);
+
+    /** @abstract buffer pointer */
+    #p = 0;
+
+    /** @abstract total bytes hashed */
+    #t = 0;
 
     constructor() { };
 
@@ -42,38 +61,51 @@ export class SHA256 {
 
     /** @overrideable */
     public update(x: Uint8Array) {
-        const bitLen = x.length * 8;
-
-        // +1 байт (0x80) +8 байт (length)
-        const totalLen = x.length + 1 + 8;
-        const paddedLen = Math.ceil(totalLen / 64) * 64;
-
-        const buff = new Uint8Array(paddedLen);
-        buff.set(x);
-        buff[x.length] = 0x80;
-
-        const view = new DataView(buff.buffer);
-        view.setUint32(paddedLen - 4, bitLen >>> 0, false);
-        view.setUint32(paddedLen - 8, Math.floor(bitLen / 2 ** 32), false);
-
-        const end = buff.length / this.BSU8;
-        for (let i = 0; i < end; ++i) {
-            this.core();
+        for (let i = 0; i < x.length; i = this.x2buff(x, i)) {
+            if (x.length - i === this.BSU8) {
+                this.core();
+                this.#buff.fill(0);
+            };
         };
 
+        this.#t += x.length;
         return this;
     };
 
     /** @overrideable */
-    public digest(): Uint8Array {
-        const out = new Uint8Array(32);
+    public digest() {
+        if (this.#p === this.#buff.length) {
+            this.#buff.fill(0);
+            this.#p = 0;
+        };
+
+        /** padding */
+        this.#buff[this.#p++] = 0x80;
+
+        if ((this.BSU8 - this.#p) < 4) {
+            this.#buff.fill(0);
+        };
+
+        /** setting length to the end of buffer */
+        new DataView(this.#buff.buffer).setBigUint64(
+            this.BSU8 - 8,
+            BigInt(this.#t) * 8n,
+            false
+        );
+        this.core();
+
+        const out = new Uint8Array(this.RBSU8);
         const view = new DataView(out.buffer);
 
         for (let i = 0; i < 8; ++i) {
-            view.setUint32(i * 4, this.#state[i], false);
+            view.setUint32(
+                i * this.BIW,
+                this.#state[i],
+                false
+            );
         };
 
-        this.#state.set(SHA256_IV);
+        this.#state.set(this.IV);
         this.#buff.fill(0);
 
         return out;
@@ -85,24 +117,25 @@ export class SHA256 {
     /** @overrideable */
     protected core() {
         const view = new DataView(this.#buff.buffer);
+        const buffer = new Uint32Array(this.BSU8);
 
         /**
          * 1) extend the first 16 words into 
          * the remaining * 48 words w[16..63] 
          * of the message schedule array
          */
-        for (let i = 0; i < 16; ++i) {
+        for (let i = 0; i < this.BSU32; ++i) {
             /** get Uint32 in BE format */
-            this.#buff[i] = view.getUint32(
+            buffer[i] = view.getUint32(
                 i * 4,
                 false
             );
         };
 
         for (let i = 16; i < 64; ++i) {
-            const s0 = this.#s0(this.#buff[i - 15]);
-            const s1 = this.#s1(this.#buff[i - 2]);
-            this.#buff[i] = (s1 + this.#buff[i - 7] + s0 + this.#buff[i - 16]) | 0;
+            const s0 = this.#s0(buffer[i - 15]);
+            const s1 = this.#s1(buffer[i - 2]);
+            buffer[i] = (s1 + buffer[i - 7] + s0 + buffer[i - 16]) | 0;
         };
 
         /** 2) compress (64 rounds) */
@@ -115,7 +148,7 @@ export class SHA256 {
             const CH = this.#ch(E, F, G);
             const MAJ = this.#maj(A, B, C);
 
-            const T1 = (H + S1 + CH + SHA256_K[i] + this.#buff[i]) | 0;
+            const T1 = (H + S1 + CH + this.K[i] + buffer[i]) | 0;
             const T2 = (S0 + MAJ) | 0;
 
             H = G;
@@ -143,6 +176,15 @@ export class SHA256 {
 
         this.#state.set([A, B, C, D, E, F, G, H]);
     };
+
+    protected x2buff(x: Uint8Array, offset: number): number {
+        while (this.#p < this.#buff.length && offset < x.length) {
+            this.#buff[this.#p++] = x[offset++];
+        };
+
+        return offset;
+    };
+
 
     ////////////////////////////////////////////////////////////////
     //////////////////////////// HIDDEN ///////////////////////////
