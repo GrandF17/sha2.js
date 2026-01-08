@@ -81,10 +81,13 @@ export class SHA256 {
 
     /** @overrideable */
     public update(x: Uint8Array) {
-        for (let i = 0; i < x.length; i = this.x2buff(x, i)) {
-            if (x.length - i === this.BSU8) {
+        let i = 0;
+        while (i < x.length) {
+            i = this.x2buff(x, i);
+
+            if (this.#p === this.BSU8) {
                 this.core();
-                this.#buff.fill(0x00);
+                this.cleanBuff();
             };
         };
 
@@ -94,19 +97,22 @@ export class SHA256 {
 
     /** @overrideable */
     public digest() {
-        if (this.#p === this.#buff.length) {
-            this.#buff.fill(0x00);
-            this.#p = 0;
-        };
-
-        /** padding */
+        /** 
+         * start of the padding 
+         * bit sequence: 10000000... 
+         */
         this.#buff[this.#p++] = 0x80;
 
-        if ((this.BSU8 - this.#p) < 4) {
-            this.#buff.fill(0x00);
+        /** 
+         * if there is not enough place for total hased data length =>
+         * run core function and fill buffer one more time 
+         */
+        if (this.#p > (this.BSU8 - 8)) {
+            this.core();
+            this.cleanBuff();
         };
 
-        /** setting length to the end of buffer */
+        /** setting length to the end of buffer and run core function */
         new DataView(this.#buff.buffer).setBigUint64(
             this.BSU8 - 8,
             BigInt(this.#t) * 8n,
@@ -126,10 +132,8 @@ export class SHA256 {
         };
 
         /** cleaning */
-        this.#state.set(this.IV);
-        this.#buff.fill(0x00);
-        this.#p = 0;
-        this.#t = 0;
+        this.cleanState();
+        this.cleanBuff();
 
         return out;
     };
@@ -200,12 +204,25 @@ export class SHA256 {
         ]);
     };
 
+    /** @overrideable */
     protected x2buff(x: Uint8Array, offset: number): number {
         while (this.#p < this.#buff.length && offset < x.length) {
             this.#buff[this.#p++] = x[offset++];
         };
 
         return offset;
+    };
+
+    /** @overrideable */
+    protected cleanBuff() {
+        this.#buff.fill(0x00);
+        this.#p = 0;
+    };
+
+    /** @overrideable */
+    protected cleanState() {
+        this.#state.set(this.IV);
+        this.#t = 0;
     };
 
     ////////////////////////////////////////////////////////////////
