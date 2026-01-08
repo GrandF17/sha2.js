@@ -1,11 +1,13 @@
 import { expect } from "chai";
 
 import { SHA224 } from "@/classes";
+import { beautify } from "@/utils/helpers";
 
 
 describe("Sha224", () => {
-    /** text, hash */
-    const tvs: [string, string][] = [
+    const sha = new SHA224();
+
+    const vectors: [string, string][] = [
         /** test according to @noble/hashes */
         [
             "",
@@ -66,16 +68,16 @@ describe("Sha224", () => {
         ]
     ];
 
-    it("hash", () => {
-        const sha = new SHA224();
+    for (let i = 0; i < vectors.length; ++i) {
+        const plaintext = vectors[i][0];
+        const hash = vectors[i][1];
 
-        for (let i = 0; i < tvs.length; ++i) {
-            const plaintext = Buffer.from(tvs[i][0], "hex");
-            const hash = tvs[i][1];
-
-            const result = sha.update(plaintext).digest();
-
-            expect(Buffer.from(result).toString("hex")).to.equal(hash);
-        };
-    });
+        it(
+            `hash(${beautify(plaintext, 8)}) = ${beautify(hash, 8)}`,
+            () => {
+                const result = sha.update(Buffer.from(plaintext, "hex")).digest();
+                expect(Buffer.from(result).toString("hex")).to.equal(hash);
+            }
+        );
+    };
 });
