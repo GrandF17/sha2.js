@@ -3,7 +3,7 @@ import { expect } from "chai";
 import { beautify, createHash } from "@/utils/helpers";
 
 
-describe("Sha224", () => {
+describe("sha224", () => {
     const sha = createHash("sha224");
 
     const vectors: [string, string][] = [

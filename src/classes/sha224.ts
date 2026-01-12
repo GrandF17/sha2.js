@@ -23,7 +23,6 @@ export class SHA224 extends SHA256 {
     protected override readonly RBSU32 = this.RBSU8 / this.BIW;
 
     /**
-     * 
      * @param iv SHA224_IV
      * @param k SHA256_K
      */

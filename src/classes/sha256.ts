@@ -42,7 +42,7 @@ export class SHA256 {
     protected readonly RBSU32 = this.RBSU8 / this.BIW;
 
     /** 
-     * @abstract SHA256 IV 
+     * @abstract SHA IV 
      * @overrideable
      */
     protected readonly IV: Uint32Array;
@@ -66,7 +66,6 @@ export class SHA256 {
     #t: number;
 
     /**
-     * 
      * @param iv SHA256_IV
      * @param k SHA256_K
      */
