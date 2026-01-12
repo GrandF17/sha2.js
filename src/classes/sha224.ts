@@ -1,4 +1,4 @@
-import { SHA224_IV } from "@/computed/constants";
+import { SHA224_IV, SHA256_K } from "@/computed/constants";
 
 import { SHA256 } from "@/classes";
 
@@ -13,24 +13,21 @@ export class SHA224 extends SHA256 {
      * @default 28 bytes (224 bits)
      * @overrided
      */
-    public override readonly RBSU8 = 28;
+    protected override readonly RBSU8 = 28;
 
     /**
      * @abstract return block size (Uint32)
      * @default 7 words
      * @overrided
      */
-    public override readonly RBSU32 = this.RBSU8 / this.BIW;
+    protected override readonly RBSU32 = this.RBSU8 / this.BIW;
 
-    /** 
-     * @abstract SHA224 IV 
-     * @overrided
+    /**
+     * 
+     * @param iv SHA224_IV
+     * @param k SHA256_K
      */
-    protected override get IV() {
-        return new Uint32Array(SHA224_IV);
-    };
-
-    constructor() {
-        super();
+    constructor(iv = SHA224_IV, k = SHA256_K) {
+        super(iv, k);
     };
 };

@@ -11,51 +11,47 @@ export class SHA256 {
      * @default 4 bytes
      * @overrideable
      */
-    public readonly BIW = 4;
+    protected readonly BIW = 4;
 
     /** 
      * @abstract block size (Uint8)
      * @default 64 bytes (512 bits)
      * @overrideable
      */
-    public readonly BSU8 = 64;
+    protected readonly BSU8 = 64;
 
     /** 
      * block size (Uint32)
      * @default 16 words
      * @overrideable
      */
-    public readonly BSU32 = this.BSU8 / this.BIW;
+    protected readonly BSU32 = this.BSU8 / this.BIW;
 
     /**
      * @abstract return block size (Uint8)
      * @default 32 bytes (256 bits)
      * @overrideable
      */
-    public readonly RBSU8 = this.BSU8 / 2;
+    protected readonly RBSU8 = this.BSU8 / 2;
 
     /**
      * @abstract return block size (Uint32)
      * @default 8 words
      * @overrideable
      */
-    public readonly RBSU32 = this.RBSU8 / this.BIW;
+    protected readonly RBSU32 = this.RBSU8 / this.BIW;
+
+    /** 
+     * @abstract SHA256 IV 
+     * @overrideable
+     */
+    protected readonly IV: Uint32Array;
 
     /** 
      * @abstract SHA256 K 
      * @overrideable
      */
-    protected get K() {
-        return new Uint32Array(SHA256_K);
-    };
-
-    /** 
-     * @abstract SHA256 IV 
-     * @overrideable
-    */
-    protected get IV() {
-        return new Uint32Array(SHA256_IV);
-    };
+    protected readonly K: Uint32Array;
 
     /** @abstract current state of SHA function */
     #state: Uint32Array;
@@ -69,8 +65,16 @@ export class SHA256 {
     /** @abstract total bytes hashed */
     #t: number;
 
-    constructor() {
-        this.#state = new Uint32Array(this.IV);
+    /**
+     * 
+     * @param iv SHA256_IV
+     * @param k SHA256_K
+     */
+    constructor(iv = SHA256_IV, k = SHA256_K) {
+        this.IV = new Uint32Array(iv);
+        this.K = new Uint32Array(k);
+
+        this.#state = new Uint32Array(iv);
         this.#buff = new Uint8Array(this.BSU8);
         this.#p = 0;
         this.#t = 0;
@@ -181,11 +185,11 @@ export class SHA256 {
             H = G;
             G = F;
             F = E;
-            E = (D + T1);
+            E = D + T1;
             D = C;
             C = B;
             B = A;
-            A = (T1 + T2);
+            A = T1 + T2;
         };
 
         /** 

@@ -4,13 +4,19 @@
 
 import { sha256 } from '@noble/hashes/sha2.js';
 import { SHA224, SHA256 } from "@/classes";
+import { createHash } from '@/utils/helpers';
+// import { createHash } from "crypto";
 
 
-const b = sha256.create().update(new Uint8Array([0x10, 0x20])).update(new Uint8Array([0x30])).digest();
-console.log(Buffer.from(b).toString("hex"));
-
-const a = new SHA256().update(new Uint8Array([0x10, 0x20])).update(new Uint8Array([0x30])).digest();
+const paylaod = new Uint8Array(104_857_600);
+const a = createHash("sha256").update(paylaod).digest();
 console.log(Buffer.from(a).toString("hex"));
 
-const c = new SHA224().update(new Uint8Array([0x10, 0x20])).update(new Uint8Array([0x30])).digest();
-console.log(Buffer.from(c).toString("hex"));
+// const b = sha256.create().update(paylaod).digest();
+// console.log(Buffer.from(b).toString("hex"));
+
+// const c = new SHA224().update(paylaod).digest();
+// console.log(Buffer.from(c).toString("hex"));
+
+// const d = createHash("sha256").update(paylaod).digest("hex");
+// console.log(d);

@@ -1,11 +1,10 @@
 import { expect } from "chai";
 
-import { SHA224 } from "@/classes";
-import { beautify } from "@/utils/helpers";
+import { beautify, createHash } from "@/utils/helpers";
 
 
 describe("Sha224", () => {
-    const sha = new SHA224();
+    const sha = createHash("sha224");
 
     const vectors: [string, string][] = [
         /** test according to @noble/hashes */
