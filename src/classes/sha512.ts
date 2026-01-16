@@ -179,8 +179,8 @@ export class SHA512 {
 
         /** 2) compress (80 rounds) */
         let [
-            A0, A1, B0, B1, C0, C1, D0, D1,
-            E0, E1, F0, F1, G0, G1, H0, H1,
+            Ahi, Alo, Bhi, Blo, Chi, Clo, Dhi, Dlo,
+            Ehi, Elo, Fhi, Flo, Ghi, Glo, Hhi, Hlo,
         ] = this.#state;  // copy of local state
 
         for (let i = 0; i < 80; ++i) {
@@ -243,20 +243,64 @@ export class SHA512 {
     ////////////////////////////////////////////////////////////////
     //////////////////////////// HIDDEN ///////////////////////////
 
-    /** local hidden Sigma0 function (SHA-224/256) */
-    #S0 = (x: [number, number]) => this.#rrot(x, 2) ^ this.#rrot(x, 13) ^ this.#rrot(x, 22);
+    /** local hidden Sigma0 hi (SHA-224/256) */
+    #S0hi = (hi: number, lo: number): number => (
+        ((lo << 4) | (hi >>> 28)) ^
+        ((hi << 30) | (lo >>> 2)) ^
+        ((hi << 25) | (lo >>> 7))
+    );
 
-    /** local hidden Sigma1 (SHA-224/256) */
-    #S1 = (x: number) => this.#rrot(x, 6) ^ this.#rrot(x, 11) ^ this.#rrot(x, 25);
+    /** local hidden Sigma0 lo (SHA-224/256) */
+    #S0lo = (hi: number, lo: number): number => (
+        ((hi << 4) | (lo >>> 28)) ^
+        ((lo << 30) | (hi >>> 2)) ^
+        ((lo << 25) | (hi >>> 7))
+    );
 
-    /** local hidden sigma0 (SHA-224/256) */
-    #s0 = (x: number) => this.#rrot(x, 7) ^ this.#rrot(x, 18) ^ this.#rsh(x, 3);
+    /** local hidden Sigma1 hi (SHA-224/256) */
+    #S1hi = (hi: number, lo: number): number => (
+        ((lo << 18) | (hi >>> 14)) ^
+        ((lo << 14) | (hi >>> 18)) ^
+        ((hi << 23) | (lo >>> 9))
+    );
 
-    /** local hidden sigma1 (SHA-224/256) */
-    #s1 = (x: number) => this.#rrot(x, 17) ^ this.#rrot(x, 19) ^ this.#rsh(x, 10);
+    /** local hidden Sigma1 lo (SHA-224/256) */
+    #S1lo = (hi: number, lo: number): number => (
+        ((hi << 18) | (lo >>> 14)) ^
+        ((hi << 14) | (lo >>> 18)) ^
+        ((lo << 23) | (hi >>> 9))
+    );
 
-    /** local hidden Majority (SHA-224/256) */
-    #maj = (x: u64, y: u64, z: u64) => ([
+    /** local hidden sigma0 hi (SHA-224/256) */
+    #s0hi = (hi: number, lo: number): number => (
+        ((lo << 31) | (hi >>> 1)) ^
+        ((lo << 24) | (hi >>> 8)) ^
+        ((hi >>> 7))
+    );
+
+    /** local hidden sigma0 lo (SHA-224/256) */
+    #s0lo = (hi: number, lo: number): number => (
+        ((hi << 31) | (lo >>> 1)) ^
+        ((hi << 24) | (lo >>> 8)) ^
+        ((hi << 25) | (lo >>> 7))
+    );
+
+    /** local hidden sigma1 hi (SHA-384/512) */
+    #s1hi = (hi: number, lo: number): number => (
+        ((lo << 13) | (hi >>> 19)) ^
+        ((hi << 3) | (lo >>> 29)) ^
+        ((hi >>> 6))
+    );
+
+    /** local hidden sigma1 lo (SHA-384/512) */
+    #s1lo = (hi: number, lo: number): number => (
+        ((hi << 13) | (lo >>> 19)) ^
+        ((lo << 3) | (hi >>> 29)) ^
+        ((hi << 26) | (lo >>> 6))
+    );
+
+    /** local hidden Majority (SHA-384/512) */
+    #maj = (x: u64, y: u64, z: u64): u64 => ([
         ((x[0] & y[0]) ^ (x[0] & z[0]) ^ (y[0] & z[0])),    // highest u32
         ((x[1] & y[1]) ^ (x[1] & z[1]) ^ (y[1] & z[1])),    // lowest u32
     ]);
@@ -265,17 +309,5 @@ export class SHA512 {
     #ch = (x: u64, y: u64, z: u64): u64 => ([
         ((x[0] & y[0]) ^ (~x[0] & z[0])),   // highest u32
         ((x[1] & y[1]) ^ (~x[1] & z[1])),   // lowest u32
-    ]);
-
-    /** local hidden non-cyclic right shift (SHA-384/512) */
-    #rsh = (x: u64, n: number): u64 => ([
-        (x[0] >>> n),                       // highest u32
-        (x[0] << (32 - n) | x[1] >>> n),    // lowest u32
-    ]);
-
-    /** local hidden cyclic right shift (SHA-384/512) */
-    #rrot = (x: u64, n: number): u64 => ([
-        (x[1] << (32 - n) | x[0] >>> n),    // highest u32
-        (x[0] << (32 - n) | x[1] >>> n),    // lowest u32
     ]);
 };

@@ -231,7 +231,7 @@ export class SHA256 {
     ////////////////////////////////////////////////////////////////
     //////////////////////////// HIDDEN ///////////////////////////
 
-    /** local hidden Sigma0 function (SHA-224/256) */
+    /** local hidden Sigma0 (SHA-224/256) */
     #S0 = (x: number) => this.#rrot(x, 2) ^ this.#rrot(x, 13) ^ this.#rrot(x, 22);
 
     /** local hidden Sigma1 (SHA-224/256) */
