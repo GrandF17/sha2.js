@@ -165,7 +165,12 @@ export class SHA256 {
         for (let i = 16; i < 64; ++i) {
             const s0 = this.#s0(buffer[i - 15]);
             const s1 = this.#s1(buffer[i - 2]);
-            buffer[i] = (s1 + buffer[i - 7] + s0 + buffer[i - 16]);
+            buffer[i] = (
+                s1 +
+                s0 +
+                buffer[i - 7] +
+                buffer[i - 16]
+            );
         };
 
         /** 2) compress (64 rounds) */
@@ -231,27 +236,37 @@ export class SHA256 {
     ////////////////////////////////////////////////////////////////
     //////////////////////////// HIDDEN ///////////////////////////
 
-    /** local hidden Sigma0 (SHA-224/256) */
-    #S0 = (x: number) => this.#rrot(x, 2) ^ this.#rrot(x, 13) ^ this.#rrot(x, 22);
+    /** local Sigma0 (SHA-224/256) */
+    #S0 = (x: number) => (
+        (x << 30 | x >>> 2) ^   // right rotate (2)
+        (x << 19 | x >>> 13) ^  // right rotate (13)
+        (x << 10 | x >>> 22)    // right rotate (22)
+    );
 
-    /** local hidden Sigma1 (SHA-224/256) */
-    #S1 = (x: number) => this.#rrot(x, 6) ^ this.#rrot(x, 11) ^ this.#rrot(x, 25);
+    /** local Sigma1 (SHA-224/256) */
+    #S1 = (x: number) => (
+        (x << 26 | x >>> 6) ^   // right rotate (6)
+        (x << 21 | x >>> 11) ^  // right rotate (11)
+        (x << 7 | x >>> 25)     // right rotate (25)
+    );
 
-    /** local hidden sigma0 (SHA-224/256) */
-    #s0 = (x: number) => this.#rrot(x, 7) ^ this.#rrot(x, 18) ^ this.#rsh(x, 3);
+    /** local sigma0 (SHA-224/256) */
+    #s0 = (x: number) => (
+        (x << 25 | x >>> 7) ^   // right rotate (7)
+        (x << 14 | x >>> 18) ^  // right rotate (18)
+        (x >>> 3)               // right shift (3)
+    );
 
-    /** local hidden sigma1 (SHA-224/256) */
-    #s1 = (x: number) => this.#rrot(x, 17) ^ this.#rrot(x, 19) ^ this.#rsh(x, 10);
+    /** local sigma1 (SHA-224/256) */
+    #s1 = (x: number) => (
+        (x << 15 | x >>> 17) ^  // right rotate (17)
+        (x << 13 | x >>> 19) ^  // right rotate (19)
+        (x >>> 10)              // right shift (10)
+    );
 
-    /** local hidden Majority (SHA-224/256) */
+    /** local Majority (SHA-224/256) */
     #maj = (x: number, y: number, z: number) => (x & y) ^ (x & z) ^ (y & z);
 
-    /** local hidden Choose (SHA-224/256) */
+    /** local Choose (SHA-224/256) */
     #ch = (x: number, y: number, z: number) => (x & y) ^ (~x & z);
-
-    /** local hidden non-cyclic right shift (SHA-224/256) */
-    #rsh = (x: number, n: number) => x >>> n;
-
-    /** local hidden cyclic right shift (SHA-224/256) */
-    #rrot = (x: number, n: number) => (x << (32 - n) | x >>> n);
 };
