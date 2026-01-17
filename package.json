@@ -20,7 +20,6 @@
   ],
   "devDependencies": {
     "@types/chai": "^5.2.3",
-    "@types/json-bigint": "^1.0.4",
     "@types/mocha": "^10.0.10",
     "@types/node": "^22.10.10",
     "chai": "^6.2.1",
@@ -33,7 +32,6 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
-    "@noble/hashes": "^2.0.1",
     "module-alias": "^2.2.3"
   }
 }
