@@ -1,4 +1,4 @@
-import { SHA224, SHA256 } from "@/classes";
+import { SHA224, SHA256 } from "@/modules";
 
 import { HashFunc } from "@/utils/types";
 

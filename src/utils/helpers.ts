@@ -1,4 +1,4 @@
-import { SHA224, SHA256, HMAC } from "@/classes";
+import { SHA224, SHA256, HMAC } from "@/modules";
 
 import { Hash } from "@/utils/types";
 

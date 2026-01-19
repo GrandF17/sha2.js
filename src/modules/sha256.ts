@@ -1,4 +1,4 @@
-import { SHA256_IV, SHA256_K } from "@/computed/constants";
+import { SHA256_IV, SHA256_K } from "@/constants/constants";
 
 
 /**
