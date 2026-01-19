@@ -1,13 +1,17 @@
 import { expect } from "chai";
 
-import { beautify, createHash } from "@/utils/helpers";
+import { createHash, beautify } from "@/utils/helpers";
 
 
+/**
+ * @abstract HMAC SHA224 tests according to 
+ * @noble/hashes and OpenSSL
+ */
 describe("sha224", () => {
     const sha = createHash("sha224");
 
+    /** [payload, hash] */
     const vectors: [string, string][] = [
-        /** test according to @noble/hashes */
         [
             "",
             "d14a028c2a3a2bc9476102bb288234c415a2b01f828ea62ac5b3e42f"
@@ -68,13 +72,13 @@ describe("sha224", () => {
     ];
 
     for (let i = 0; i < vectors.length; ++i) {
-        const plaintext = vectors[i][0];
+        const payload = vectors[i][0];
         const hash = vectors[i][1];
 
         it(
-            `hash(${beautify(plaintext, 8)}) = ${beautify(hash, 8)}`,
+            `hash(${beautify(payload, 8)}) = ${beautify(hash, 8)}`,
             () => {
-                const result = sha.update(Buffer.from(plaintext, "hex")).digest();
+                const result = sha.update(Buffer.from(payload, "hex")).digest();
                 expect(Buffer.from(result).toString("hex")).to.equal(hash);
             }
         );

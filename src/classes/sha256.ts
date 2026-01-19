@@ -18,28 +18,28 @@ export class SHA256 {
      * @default 64 bytes (512 bits)
      * @overrideable
      */
-    protected readonly BSU8 = 64;
+    public readonly BSU8 = 64;
 
     /** 
      * block size (Uint32)
      * @default 16 words
      * @overrideable
      */
-    protected readonly BSU32 = this.BSU8 / this.BIW;
+    public readonly BSU32 = this.BSU8 / this.BIW;
 
     /**
      * @abstract return block size (Uint8)
      * @default 32 bytes (256 bits)
      * @overrideable
      */
-    protected readonly RBSU8 = this.BSU8 / 2;
+    public readonly RBSU8 = this.BSU8 / 2;
 
     /**
      * @abstract return block size (Uint32)
      * @default 8 words
      * @overrideable
      */
-    protected readonly RBSU32 = this.RBSU8 / this.BIW;
+    public readonly RBSU32 = this.RBSU8 / this.BIW;
 
     /** 
      * @abstract SHA IV 

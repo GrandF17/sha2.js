@@ -13,14 +13,14 @@ export class SHA224 extends SHA256 {
      * @default 28 bytes (224 bits)
      * @overrided
      */
-    protected override readonly RBSU8 = 28;
+    public override readonly RBSU8 = 28;
 
     /**
      * @abstract return block size (Uint32)
      * @default 7 words
      * @overrided
      */
-    protected override readonly RBSU32 = this.RBSU8 / this.BIW;
+    public override readonly RBSU32 = this.RBSU8 / this.BIW;
 
     /**
      * @param iv SHA224_IV

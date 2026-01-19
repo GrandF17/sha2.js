@@ -1,4 +1,4 @@
-import { SHA224, SHA256 } from "@/classes";
+import { SHA224, SHA256, HMAC } from "@/classes";
 
 import { Hash } from "@/utils/types";
 
@@ -12,7 +12,14 @@ export const createHash = (hash: Hash) => {
     switch (hash) {
         case "sha224": return new SHA224();
         case "sha256": return new SHA256();
-        case "sha384": throw new Error("Not implemented yet");
-        case "sha512": throw new Error("Not implemented yet");
+        default: throw "Invalid argument was passed";
+    };
+};
+
+export const createHmac = (hash: Hash) => {
+    switch (hash) {
+        case "sha224": return new HMAC(new SHA224());
+        case "sha256": return new HMAC(new SHA256());
+        default: throw "Invalid argument was passed";
     };
 };
