@@ -5,8 +5,7 @@ This repo implements only sha-224/256 due to JS specific number storage, JS allo
 
 If you want to use SHA-384/512 see [sha2.wasm](https://github.com/GrandF17/sha2.wasm) in this profile, it is written on C++ and has all 4 functions + HMAC (still working on it)
 
-### SHA-224 usage example
-
+### SHA-224 usage example:
 ```JS
 const sha = createHash("sha224");
 
@@ -28,8 +27,7 @@ const result = sha.update(paylaod).digest();
 console.log("sha224():", Buffer.from(result).toString("hex"));
 ```
 
-### SHA-256 usage example
-
+### SHA-256 usage example:
 ```JS
 const sha = createHash("sha256");
 
@@ -51,8 +49,7 @@ const result = sha.update(paylaod).digest();
 console.log("sha256():", Buffer.from(result).toString("hex"));
 ```
 
-### HMAC-SHA-256 usage example
-
+### HMAC-SHA-256 symmetric signature usage example:
 ```JS
 const hmac = createHmac("sha256");
 
@@ -72,9 +69,15 @@ const paylaod = new Uint8Array([
     0x65, 0x72, 0x20, 0x79, 0x6f, 0x75, 0x20, 0x6f,
 ]);
 
-/** creating hash from payload */
-const result = hmac.init(key).update(paylaod).digest();
+/** initializing hmac state with a custom secret-key */
+hmac.init(key);
 
-/** logging the result of hash-function */
-console.log("hmac-sha256():", Buffer.from(result).toString("hex"));
+/** signing payload */
+const sig = hmac.update(paylaod).digest();
+
+/** logging hmac signature */
+console.log("hmac-sha256():", Buffer.from(sig).toString("hex"));
+
+/** destroing key-state of hmac class */
+hmac.destroy();
 ```
