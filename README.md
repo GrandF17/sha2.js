@@ -78,6 +78,6 @@ const sig = hmac.update(paylaod).digest();
 /** logging hmac signature */
 console.log("hmac-sha256():", Buffer.from(sig).toString("hex"));
 
-/** destroing key-state of hmac class */
+/** destroing state of hmac class (secret key) */
 hmac.destroy();
 ```
