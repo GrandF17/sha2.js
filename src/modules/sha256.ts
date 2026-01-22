@@ -158,8 +158,8 @@ export class SHA256 {
     /** @overrideable */
     protected core() {
         /** local links to variables */
-        const buffer = this.#buffCore;
-        const view = this.#buffView;
+        const buffCore = this.#buffCore;
+        const buffView = this.#buffView;
         const state = this.#state;
         const K = this.K;
 
@@ -178,18 +178,18 @@ export class SHA256 {
          */
         for (let i = 0; i < this.BSU32; ++i) {
             /** get Uint32 in BE format */
-            buffer[i] = view.getUint32(
+            buffCore[i] = buffView.getUint32(
                 i * 4,
                 false
             );
         };
 
         for (let i = 16; i < 64; ++i) {
-            buffer[i] = (
-                s1(buffer[i - 2]) +
-                s0(buffer[i - 15]) +
-                buffer[i - 7] +
-                buffer[i - 16]
+            buffCore[i] = (
+                s1(buffCore[i - 2]) +
+                s0(buffCore[i - 15]) +
+                buffCore[i - 7] +
+                buffCore[i - 16]
             );
         };
 
@@ -198,7 +198,7 @@ export class SHA256 {
         let E = state[4], F = state[5], G = state[6], H = state[7];
 
         for (let i = 0; i < 64; ++i) {
-            const T1 = (H + S1(E) + ch(E, F, G) + K[i] + buffer[i]);
+            const T1 = (H + S1(E) + ch(E, F, G) + K[i] + buffCore[i]);
             const T2 = (S0(A) + maj(A, B, C));
 
             H = G;
