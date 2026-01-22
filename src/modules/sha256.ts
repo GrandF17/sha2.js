@@ -21,7 +21,7 @@ export class SHA256 {
     public readonly BSU8 = 64;
 
     /** 
-     * block size (Uint32)
+     * @abstract block size (Uint32)
      * @default 16 words
      * @overrideable
      */
