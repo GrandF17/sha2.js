@@ -59,6 +59,12 @@ export class SHA256 {
     /** @abstract reusable buffer */
     #buff: Uint8Array;
 
+    /** @abstract view of reusable buffer */
+    #buffView: DataView;
+
+    /** @abstract reusable core-buffer for extention */
+    #buffCore: Uint32Array;
+
     /** @abstract buffer pointer */
     #p: number;
 
@@ -74,7 +80,12 @@ export class SHA256 {
         this.K = new Uint32Array(k);
 
         this.#state = new Uint32Array(iv);
+
         this.#buff = new Uint8Array(this.BSU8);
+        this.#buffView = new DataView(this.#buff.buffer);
+
+        this.#buffCore = new Uint32Array(this.BSU8);
+
         this.#p = 0;
         this.#t = 0;
     };
@@ -116,7 +127,7 @@ export class SHA256 {
         };
 
         /** setting length to the end of buffer and run core function */
-        new DataView(this.#buff.buffer).setBigUint64(
+        this.#buffView.setBigUint64(
             this.BSU8 - 8,
             BigInt(this.#t) * 8n,
             false
@@ -146,8 +157,19 @@ export class SHA256 {
 
     /** @overrideable */
     protected core() {
-        const view = new DataView(this.#buff.buffer);
-        const buffer = new Uint32Array(this.BSU8);
+        /** local links to variables */
+        const buffer = this.#buffCore;
+        const view = this.#buffView;
+        const state = this.#state;
+        const K = this.K;
+
+        /** local links to functions */
+        const s0 = this.#s0;
+        const s1 = this.#s1;
+        const S0 = this.#S0;
+        const S1 = this.#S1;
+        const ch = this.#ch;
+        const maj = this.#maj;
 
         /**
          * 1) extend the first 16 words into 
@@ -163,28 +185,21 @@ export class SHA256 {
         };
 
         for (let i = 16; i < 64; ++i) {
-            const s0 = this.#s0(buffer[i - 15]);
-            const s1 = this.#s1(buffer[i - 2]);
             buffer[i] = (
-                s1 +
-                s0 +
+                s1(buffer[i - 2]) +
+                s0(buffer[i - 15]) +
                 buffer[i - 7] +
                 buffer[i - 16]
             );
         };
 
         /** 2) compress (64 rounds) */
-        let [A, B, C, D, E, F, G, H] = this.#state;  // copy of local state
+        let A = state[0], B = state[1], C = state[2], D = state[3];
+        let E = state[4], F = state[5], G = state[6], H = state[7];
 
         for (let i = 0; i < 64; ++i) {
-            const S1 = this.#S1(E);
-            const S0 = this.#S0(A);
-
-            const CH = this.#ch(E, F, G);
-            const MAJ = this.#maj(A, B, C);
-
-            const T1 = (H + S1 + CH + this.K[i] + buffer[i]);
-            const T2 = (S0 + MAJ);
+            const T1 = (H + S1(E) + ch(E, F, G) + K[i] + buffer[i]);
+            const T2 = (S0(A) + maj(A, B, C));
 
             H = G;
             G = F;
@@ -200,16 +215,8 @@ export class SHA256 {
          * 3) add the compressed chunk
          * to the current hash value 
          */
-        this.#state.set([
-            this.#state[0] + A,
-            this.#state[1] + B,
-            this.#state[2] + C,
-            this.#state[3] + D,
-            this.#state[4] + E,
-            this.#state[5] + F,
-            this.#state[6] + G,
-            this.#state[7] + H,
-        ]);
+        state[0] += A; state[1] += B; state[2] += C; state[3] += D;
+        state[4] += E; state[5] += F; state[6] += G; state[7] += H;
     };
 
     /** @overrideable */
@@ -236,37 +243,40 @@ export class SHA256 {
     ////////////////////////////////////////////////////////////////
     //////////////////////////// HIDDEN ///////////////////////////
 
-    /** local Sigma0 (SHA-224/256) */
+    /** @abstract local Sigma0 (SHA-224/256) */
     #S0 = (x: number) => (
         (x << 30 | x >>> 2) ^   // right rotate (2)
         (x << 19 | x >>> 13) ^  // right rotate (13)
         (x << 10 | x >>> 22)    // right rotate (22)
     );
 
-    /** local Sigma1 (SHA-224/256) */
+    /** @abstract local Sigma1 (SHA-224/256) */
     #S1 = (x: number) => (
         (x << 26 | x >>> 6) ^   // right rotate (6)
         (x << 21 | x >>> 11) ^  // right rotate (11)
         (x << 7 | x >>> 25)     // right rotate (25)
     );
 
-    /** local sigma0 (SHA-224/256) */
+    /** @abstract local sigma0 (SHA-224/256) */
     #s0 = (x: number) => (
         (x << 25 | x >>> 7) ^   // right rotate (7)
         (x << 14 | x >>> 18) ^  // right rotate (18)
         (x >>> 3)               // right shift (3)
     );
 
-    /** local sigma1 (SHA-224/256) */
+    /** @abstract local sigma1 (SHA-224/256) */
     #s1 = (x: number) => (
         (x << 15 | x >>> 17) ^  // right rotate (17)
         (x << 13 | x >>> 19) ^  // right rotate (19)
         (x >>> 10)              // right shift (10)
     );
 
-    /** local Majority (SHA-224/256) */
-    #maj = (x: number, y: number, z: number) => (x & y) ^ (x & z) ^ (y & z);
+    /** 
+     * @abstract local Majority (SHA-224/256) 
+     * @canonical (x & y) ^ (x & z) ^ (y & z)
+    */
+    #maj = (x: number, y: number, z: number) => (x & y) | (z & (x | y));
 
-    /** local Choose (SHA-224/256) */
+    /** @abstract local Choose (SHA-224/256) */
     #ch = (x: number, y: number, z: number) => (x & y) ^ (~x & z);
 };
