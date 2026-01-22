@@ -95,9 +95,8 @@ export class SHA256 {
 
     /** @overrideable */
     public update(x: Uint8Array) {
-        let i = 0;
-        while (i < x.length) {
-            i = this.x2buff(x, i);
+        for (let offset = 0; offset < x.length; /** */) {
+            offset = this.x2buff(x, offset);
 
             if (this.#p === this.BSU8) {
                 this.core();
