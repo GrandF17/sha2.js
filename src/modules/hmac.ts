@@ -19,9 +19,6 @@ export class HMAC {
     /** @abstract opad XOR shared secret for HMAC */
     #okey = new Uint8Array();
 
-    /** @abstract concatenated messages buffer */
-    #msg = new Uint8Array();
-
     constructor(H: SHA224 | SHA256) {
         this.#H = H;
     };
@@ -52,6 +49,8 @@ export class HMAC {
         key.fill(0xad);
         key.fill(0x00);
 
+        this.#H.update(this.#ikey);
+
         return this;
     };
 
@@ -70,41 +69,19 @@ export class HMAC {
     };
 
     public update(message: Uint8Array) {
-        /** 
-         * we assume that the data that is signed using 
-         * HMAC is not secret, so it is not specifically
-         * cleaning in this function
-         */
-
-        const a = new Uint8Array(this.#msg);
-        const b = new Uint8Array(message);
-
-        /** reassigning */
-        this.#msg = new Uint8Array(a.length + b.length);
-
-        /** filling with new data */
-        this.#msg.set(a, 0);
-        this.#msg.set(b, a.length);
-
+        this.#H.update(message);
         return this;
     };
 
     public digest() {
         /** H((IPAD XOR KEY) || MESSAGE) */
-        const ipadded = this.#H
-            .update(this.#ikey)
-            .update(this.#msg)
-            .digest();
+        const ipadded = this.#H.digest();
 
         /** H((OPAD XOR KEY) || IPADDED) */
         const opadded = this.#H
             .update(this.#okey)
             .update(ipadded)
             .digest();
-
-        /** msg destruction */
-        this.#msg.fill(0x00);
-        this.#msg = new Uint8Array();
 
         return opadded;
     };
