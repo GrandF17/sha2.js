@@ -3,7 +3,7 @@
 
 This repo implements only sha-224/256 due to JS specific number storage, JS allocates only 55 bits for int part of number, but for sha-384/512 we need 64 bit. Thus, we will have to write wrappers over number in order to implement the logic of working on uint64.
 
-If you want to use SHA-384/512 see [sha2.wasm](https://github.com/GrandF17/sha2.wasm) in this profile, it is written on C++ and has all 4 functions + HMAC (still working on it)
+If you want to use SHA-384/512 see [sha2.wasm](https://github.com/GrandF17/sha2.wasm) in this profile, it is written on C++ and has all 4 functions + HMAC!
 
 ### SHA-224 usage example:
 ```JS
